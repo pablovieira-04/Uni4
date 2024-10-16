@@ -1,0 +1,319 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_TIMES 5
+#define MAX_NOME 30
+
+typedef struct {
+    char nomes[MAX_TIMES][MAX_NOME];
+    int count;
+} ListaEstatica;
+
+typedef struct {
+    char nomes[MAX_TIMES][MAX_NOME];
+    int topo;
+} PilhaEstatica;
+
+typedef struct {
+    char nomes[MAX_TIMES][MAX_NOME];
+    int frente, tras;
+} FilaEstatica;
+
+typedef struct No {
+    char nome[MAX_NOME];
+    struct No* proximo;
+} No;
+
+typedef struct {
+    No* cabeca;
+} ListaDinamica;
+
+typedef struct {
+    No* topo;
+} PilhaDinamica;
+
+typedef struct {
+    No* frente;
+    No* tras;
+} FilaDinamica;
+
+void adicionarListaEstatica(ListaEstatica* lista, const char* nome) {
+    if (lista->count < MAX_TIMES) {
+        strcpy(lista->nomes[lista->count], nome);
+        lista->count++;
+    } else {
+        printf("Lista está cheia!\n");
+    }
+}
+
+void removerListaEstatica(ListaEstatica* lista, const char* nome) {
+    for (int i = 0; i < lista->count; i++) {
+        if (strcmp(lista->nomes[i], nome) == 0) {
+            for (int j = i; j < lista->count - 1; j++) {
+                strcpy(lista->nomes[j], lista->nomes[j + 1]);
+            }
+            lista->count--;
+            return;
+        }
+    }
+    printf("Time não encontrado!\n");
+}
+
+void buscarListaEstatica(ListaEstatica* lista, const char* nome) {
+    for (int i = 0; i < lista->count; i++) {
+        if (strcmp(lista->nomes[i], nome) == 0) {
+            printf("Time encontrado: %s\n", lista->nomes[i]);
+            return;
+        }
+    }
+    printf("Time não encontrado!\n");
+}
+
+void empilharPilhaEstatica(PilhaEstatica* pilha, const char* nome) {
+    if (pilha->topo < MAX_TIMES - 1) {
+        strcpy(pilha->nomes[++pilha->topo], nome);
+    } else {
+        printf("Pilha está cheia!\n");
+    }
+}
+
+void desempilharPilhaEstatica(PilhaEstatica* pilha) {
+    if (pilha->topo >= 0) {
+        printf("Time desempilhado: %s\n", pilha->nomes[pilha->topo--]);
+    } else {
+        printf("Pilha está vazia!\n");
+    }
+}
+
+void enfileirarFilaEstatica(FilaEstatica* fila, const char* nome) {
+    if (fila->tras < MAX_TIMES - 1) {
+        strcpy(fila->nomes[++fila->tras], nome);
+        if (fila->frente == -1) fila->frente = 0;
+    } else {
+        printf("Fila está cheia!\n");
+    }
+}
+
+void desenfileirarFilaEstatica(FilaEstatica* fila) {
+    if (fila->frente != -1) {
+        printf("Time desenfileirado: %s\n", fila->nomes[fila->frente]);
+        if (fila->frente == fila->tras) {
+            fila->frente = fila->tras = -1; // Fila fica vazia
+        } else {
+            fila->frente++;
+        }
+    } else {
+        printf("Fila está vazia!\n");
+    }
+}
+
+void adicionarListaDinamica(ListaDinamica* lista, const char* nome) {
+    No* novoNo = (No*)malloc(sizeof(No));
+    if (novoNo) {
+        strcpy(novoNo->nome, nome);
+        novoNo->proximo = lista->cabeca;
+        lista->cabeca = novoNo;
+    } else {
+        printf("Erro ao alocar memória!\n");
+    }
+}
+
+void removerListaDinamica(ListaDinamica* lista, const char* nome) {
+    No* atual = lista->cabeca;
+    No* anterior = NULL;
+
+    while (atual != NULL && strcmp(atual->nome, nome) != 0) {
+        anterior = atual;
+        atual = atual->proximo;
+    }
+
+    if (atual != NULL) {
+        if (anterior == NULL) {
+            lista->cabeca = atual->proximo;
+        } else {
+            anterior->proximo = atual->proximo;
+        }
+        free(atual);
+    } else {
+        printf("Time não encontrado!\n");
+    }
+}
+
+void buscarListaDinamica(ListaDinamica* lista, const char* nome) {
+    No* atual = lista->cabeca;
+
+    while (atual != NULL) {
+        if (strcmp(atual->nome, nome) == 0) {
+            printf("Time encontrado: %s\n", atual->nome);
+            return;
+        }
+        atual = atual->proximo;
+    }
+    printf("Time não encontrado!\n");
+}
+
+void empilharPilhaDinamica(PilhaDinamica* pilha, const char* nome) {
+    No* novoNo = (No*)malloc(sizeof(No));
+    if (novoNo) {
+        strcpy(novoNo->nome, nome);
+        novoNo->proximo = pilha->topo;
+        pilha->topo = novoNo;
+    } else {
+        printf("Erro ao alocar memória!\n");
+    }
+}
+
+void desempilharPilhaDinamica(PilhaDinamica* pilha) {
+    if (pilha->topo != NULL) {
+        No* temp = pilha->topo;
+        printf("Time desempilhado: %s\n", temp->nome);
+        pilha->topo = temp->proximo;
+        free(temp);
+    } else {
+        printf("Pilha está vazia!\n");
+    }
+}
+
+void enfileirarFilaDinamica(FilaDinamica* fila, const char* nome) {
+    No* novoNo = (No*)malloc(sizeof(No));
+    if (novoNo) {
+        strcpy(novoNo->nome, nome);
+        novoNo->proximo = NULL;
+
+        if (fila->tras == NULL) {
+            fila->frente = fila->tras = novoNo;
+        } else {
+            fila->tras->proximo = novoNo;
+            fila->tras = novoNo;
+        }
+    } else {
+        printf("Erro ao alocar memória!\n");
+    }
+}
+
+void desenfileirarFilaDinamica(FilaDinamica* fila) {
+    if (fila->frente != NULL) {
+        No* temp = fila->frente;
+        printf("Time desenfileirado: %s\n", temp->nome);
+        fila->frente = temp->proximo;
+        if (fila->frente == NULL) {
+            fila->tras = NULL;
+        }
+        free(temp);
+    } else {
+        printf("Fila está vazia!\n");
+    }
+}
+
+int main() {
+    int opcao;
+    printf("Escolha a estrutura de dados (1: Estática, 2: Dinâmica): ");
+    scanf("%d", &opcao);
+
+    if (opcao == 1) {
+        ListaEstatica listaEstatica = {.count = 0};
+        PilhaEstatica pilhaEstatica = {.topo = -1};
+        FilaEstatica filaEstatica = {.frente = -1, .tras = -1};
+
+        int operacao;
+        do {
+            printf("\nEscolha uma operação (1: Adicionar, 2: Remover, 3: Buscar, 4: Empilhar, 5: Desempilhar, 6: Enfileirar, 7: Desenfileirar, 0: Sair): ");
+            scanf("%d", &operacao);
+            char nome[MAX_NOME];
+
+            switch (operacao) {
+                case 1:
+                    printf("Digite o nome do time: ");
+                    scanf("%s", nome);
+                    adicionarListaEstatica(&listaEstatica, nome);
+                    break;
+                case 2:
+                    printf("Digite o nome do time a remover: ");
+                    scanf("%s", nome);
+                    removerListaEstatica(&listaEstatica, nome);
+                    break;
+                case 3:
+                    printf("Digite o nome do time a buscar: ");
+                    scanf("%s", nome);
+                    buscarListaEstatica(&listaEstatica, nome);
+                    break;
+                case 4:
+                    printf("Digite o nome do time a empilhar: ");
+                    scanf("%s", nome);
+                    empilharPilhaEstatica(&pilhaEstatica, nome);
+                    break;
+                case 5:
+                    desempilharPilhaEstatica(&pilhaEstatica);
+                    break;
+                case 6:
+                    printf("Digite o nome do time a enfileirar: ");
+                    scanf("%s", nome);
+                    enfileirarFilaEstatica(&filaEstatica, nome);
+                    break;
+                case 7:
+                    desenfileirarFilaEstatica(&filaEstatica);
+                    break;
+                case 0:
+                    printf("Saindo...\n");
+                    break;
+                default:
+                    printf("Opção inválida!\n");
+            }
+        } while (operacao != 0);
+    } else if (opcao == 2) {
+        ListaDinamica listaDinamica = {.cabeca = NULL};
+        PilhaDinamica pilhaDinamica = {.topo = NULL};
+        FilaDinamica filaDinamica = {.frente = NULL, .tras = NULL};
+
+        int operacao;
+        do {
+            printf("\nEscolha uma operação (1: Adicionar, 2: Remover, 3: Buscar, 4: Empilhar, 5: Desempilhar, 6: Enfileirar, 7: Desenfileirar, 0: Sair): ");
+            scanf("%d", &operacao);
+            char nome[MAX_NOME];
+
+            switch (operacao) {
+                case 1:
+                    printf("Digite o nome do time: ");
+                    scanf("%s", nome);
+                    adicionarListaDinamica(&listaDinamica, nome);
+                    break;
+                case 2:
+                    printf("Digite o nome do time a remover: ");
+                    scanf("%s", nome);
+                    removerListaDinamica(&listaDinamica, nome);
+                    break;
+                case 3:
+                    printf("Digite o nome do time a buscar: ");
+                    scanf("%s", nome);
+                    buscarListaDinamica(&listaDinamica, nome);
+                    break;
+                case 4:
+                    printf("Digite o nome do time a empilhar: ");
+                    scanf("%s", nome);
+                    empilharPilhaDinamica(&pilhaDinamica, nome);
+                    break;
+                case 5:
+                    desempilharPilhaDinamica(&pilhaDinamica);
+                    break;
+                case 6:
+                    printf("Digite o nome do time a enfileirar: ");
+                    scanf("%s", nome);
+                    enfileirarFilaDinamica(&filaDinamica, nome);
+                    break;
+                case 7:
+                    desenfileirarFilaDinamica(&filaDinamica);
+                    break;
+                case 0:
+                    printf("Saindo...\n");
+                    break;
+                default:
+                    printf("Opção inválida!\n");
+            }
+        } while (operacao != 0);
+    } else {
+        printf("Opção inválida!\n");
+    }
+
+    return 0;
+}
